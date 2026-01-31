@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Search, ShoppingCart, User } from "lucide-react";
 import { useWishlist } from "@/contexts/wishlist-context";
+import { useCart } from "@/contexts/cart-context";
 import { useAppDispatch } from "@/redux/hook";
 import { setSearchQuery } from "@/redux/slices/searchSlice";
 
@@ -26,6 +27,7 @@ export function CustomerNav({
 }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
   const { wishlist } = useWishlist();
+  const { cartItems } = useCart();
   const dispatch = useAppDispatch();
   const [user, setUser] = useState<{
     firstName?: string;
@@ -163,9 +165,11 @@ export function CustomerNav({
             aria-label="Cart"
           >
             <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-              3
-            </span>
+            {cartItems.length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                {cartItems.length}
+              </span>
+            )}
             <span className="sr-only">Cart</span>
           </Button>
         </Link>
