@@ -26,7 +26,7 @@ export function CustomerNav({
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
-  const { wishlist } = useWishlist();
+  const { wishlistItems } = useWishlist();
   const { cartItems } = useCart();
   const dispatch = useAppDispatch();
   const [user, setUser] = useState<{
@@ -148,9 +148,9 @@ export function CustomerNav({
             aria-label="Wishlist"
           >
             <Heart className="h-5 w-5" />
-            {wishlist.length > 0 && (
+            {wishlistItems.length > 0 && (
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-                {wishlist.length}
+                {wishlistItems.length}
               </span>
             )}
             <span className="sr-only">Wishlist</span>

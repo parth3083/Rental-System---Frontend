@@ -23,7 +23,8 @@ export function ProductCard({
   price,
   unit,
   inStock = true,
-}: ProductCardProps) {
+  showWishlistButton = true,
+}: ProductCardProps & { showWishlistButton?: boolean }) {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const inWishlist = isInWishlist(id);
 
@@ -34,7 +35,7 @@ export function ProductCard({
     if (inWishlist) {
       removeFromWishlist(id);
     } else {
-      addToWishlist({ id, title, image, price, unit });
+      addToWishlist(id);
     }
   };
 
@@ -50,20 +51,24 @@ export function ProductCard({
 
           {/* Badges/Actions Overlay */}
           <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
-            <Button
-              variant="secondary"
-              size="icon"
-              className={cn(
-                "h-8 w-8 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm",
-                inWishlist
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-white/80 hover:bg-white text-gray-700 hover:text-red-500 dark:bg-black/50 dark:text-gray-200",
-              )}
-              onClick={toggleWishlist}
-            >
-              <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
-              <span className="sr-only">Wishlist</span>
-            </Button>
+            {showWishlistButton && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className={cn(
+                  "h-8 w-8 rounded-full backdrop-blur-md transition-all duration-300 shadow-sm",
+                  inWishlist
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-white/80 hover:bg-white text-gray-700 hover:text-red-500 dark:bg-black/50 dark:text-gray-200",
+                )}
+                onClick={toggleWishlist}
+              >
+                <Heart
+                  className={cn("h-4 w-4", inWishlist && "fill-current")}
+                />
+                <span className="sr-only">Wishlist</span>
+              </Button>
+            )}
           </div>
 
           <div className="relative h-full w-full p-6 transition-transform duration-500 group-hover:scale-105">
