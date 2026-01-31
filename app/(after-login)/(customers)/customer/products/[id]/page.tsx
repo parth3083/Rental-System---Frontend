@@ -10,6 +10,7 @@ import { useState, use } from "react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
 import Link from "next/link"
+import { useWishlist } from "@/contexts/wishlist-context"
 
 // Reusing the dummy data for now to simulate data fetching
 const PRODUCTS: any[] = [
@@ -70,6 +71,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
     const [startDate, setStartDate] = useState<Date | undefined>(new Date())
     const [endDate, setEndDate] = useState<Date | undefined>(undefined)
     const [quantity, setQuantity] = useState(1)
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
 
     // Simulate fetching
     const product = PRODUCTS.find(p => p.id === resolvedParams.id)
@@ -83,6 +85,22 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                 </Link>
             </div>
         )
+    }
+
+    const inWishlist = isInWishlist(product.id)
+
+    const toggleWishlist = () => {
+        if (inWishlist) {
+            removeFromWishlist(product.id)
+        } else {
+            addToWishlist({
+                id: product.id,
+                title: product.title,
+                image: product.image,
+                price: product.price,
+                unit: product.unit
+            })
+        }
     }
 
     return (
@@ -213,8 +231,16 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                             <ShoppingCart className="mr-2 h-5 w-5" />
                             Add to Cart
                         </Button>
-                        <Button variant="outline" size="icon" className="h-12 w-12">
-                            <Heart className="h-5 w-5" />
+                        <Button
+                            variant={inWishlist ? "default" : "outline"}
+                            size="icon"
+                            className={cn(
+                                "h-12 w-12",
+                                inWishlist && "bg-red-500 hover:bg-red-600 text-white"
+                            )}
+                            onClick={toggleWishlist}
+                        >
+                            <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
                         </Button>
                         <Button variant="outline" size="icon" className="h-12 w-12">
                             <Share2 className="h-5 w-5" />

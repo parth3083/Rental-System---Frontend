@@ -74,13 +74,17 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
         <div className="container mx-auto py-6 px-4 max-w-screen-xl">
             {/* Header */}
             <div className="flex items-center justify-between mb-6 border-b pb-4">
-                <div className="flex items-center gap-4">
+                {/* <div className="flex items-center gap-4">
                     <div className="bg-purple-100 text-purple-700 px-4 py-1 rounded font-semibold">New</div>
                     <span className="text-xl font-semibold">Rental order</span>
                     <div className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-600" />
                         <X className="h-4 w-4 text-red-600" />
                     </div>
+                </div> */}
+                <div>
+                    <h1 className="text-2xl font-bold">Quotation</h1>
+                    <p className="text-muted-foreground">Quotation for {order.customer}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="gap-2">
@@ -123,7 +127,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
             </div>
 
             {/* Order Reference & Status */}
-            <div className="flex items-center justify-between mb-6">
+            {/* <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">{order.reference}</h1>
                 <div className="flex items-center gap-2">
                     <Badge
@@ -140,7 +144,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                         {order.displayStatus || order.status}
                     </Badge>
                 </div>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Left Column */}

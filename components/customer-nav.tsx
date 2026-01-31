@@ -17,12 +17,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, Search, ShoppingCart, User } from "lucide-react"
+import { useWishlist } from "@/contexts/wishlist-context"
 
 export function CustomerNav({
     className,
     ...props
 }: React.HTMLAttributes<HTMLElement>) {
     const pathname = usePathname()
+    const { wishlist } = useWishlist()
 
     const routes = [
         {
@@ -96,10 +98,17 @@ export function CustomerNav({
 
             {/* Right: Actions */}
             <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" className="relative" aria-label="Wishlist">
-                    <Heart className="h-5 w-5" />
-                    <span className="sr-only">Wishlist</span>
-                </Button>
+                <Link href="/customer/wishlist">
+                    <Button variant="ghost" size="icon" className="relative" aria-label="Wishlist">
+                        <Heart className="h-5 w-5" />
+                        {wishlist.length > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                                {wishlist.length}
+                            </span>
+                        )}
+                        <span className="sr-only">Wishlist</span>
+                    </Button>
+                </Link>
 
                 <Link href="/customer/cart">
                     <Button variant="ghost" size="icon" className="relative" aria-label="Cart">

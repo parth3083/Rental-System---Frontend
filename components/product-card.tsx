@@ -1,10 +1,15 @@
+"use client"
+
 import Image from "next/image"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
+import { useWishlist } from "@/contexts/wishlist-context"
+import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
+    id: string
     title: string
     image: string
     price: string
@@ -12,7 +17,21 @@ interface ProductCardProps {
     inStock?: boolean
 }
 
-export function ProductCard({ title, image, price, unit, inStock = true }: ProductCardProps) {
+export function ProductCard({ id, title, image, price, unit, inStock = true }: ProductCardProps) {
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+    const inWishlist = isInWishlist(id)
+
+    const toggleWishlist = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (inWishlist) {
+            removeFromWishlist(id)
+        } else {
+            addToWishlist({ id, title, image, price, unit })
+        }
+    }
+
     return (
         <Card
             className="group overflow-hidden border-none shadow-none hover:shadow-md transition-shadow bg-transparent h-full cursor-pointer relative"
@@ -24,28 +43,27 @@ export function ProductCard({ title, image, price, unit, inStock = true }: Produ
                     </div>
                 )}
 
-                {/* Wishlist Button - Only for in-stock items */}
+                {/* Wishlist Button - Always visible when in wishlist, otherwise on hover */}
                 {inStock && (
                     <div className="absolute top-2 right-2 z-20">
                         <Button
                             variant="secondary"
                             size="icon"
-                            className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-red-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all"
-                            onClick={(e) => {
-                                e.preventDefault(); // Prevent Link navigation
-                                e.stopPropagation();
-                                // Add wishlist logic here
-                                console.log("Added to wishlist");
-                            }}
+                            className={cn(
+                                "h-8 w-8 rounded-full shadow-sm transition-all",
+                                inWishlist
+                                    ? "bg-red-500 hover:bg-red-600 text-white opacity-100"
+                                    : "bg-white/80 hover:bg-white text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100"
+                            )}
+                            onClick={toggleWishlist}
                         >
-                            <Heart className="h-4 w-4" />
-                            <span className="sr-only">Add to Wishlist</span>
+                            <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+                            <span className="sr-only">{inWishlist ? "Remove from" : "Add to"} Wishlist</span>
                         </Button>
                     </div>
                 )}
 
                 <div className="relative h-full w-full p-4 flex items-center justify-center">
-                    {/* Using a placeholder if no image provided or fallback */}
                     <div className="relative h-full w-full">
                         <Image
                             src={image}
@@ -58,7 +76,6 @@ export function ProductCard({ title, image, price, unit, inStock = true }: Produ
                 </div>
             </CardContent>
             <CardFooter className="flex flex-col items-start p-2 pt-3">
-                {/* <h3 className="font-medium text-sm line-clamp-1">{title}</h3> */}
                 <div className="w-full text-center">
                     <span className="font-semibold text-sm">{price}</span>
                     <span className="text-muted-foreground text-xs"> / {unit}</span>
