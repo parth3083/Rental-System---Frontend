@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useWishlist } from "@/contexts/wishlist-context";
+import { useCart } from "@/contexts/cart-context";
 import { productService, ProductDetails } from "@/services/product.service";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ export default function ProductDetailsPage({
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +62,32 @@ export default function ProductDetailsPage({
     };
     fetchProduct();
   }, [resolvedParams.id]);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+
+    if (endDate < startDate) {
+      toast.error("End date cannot be before start date");
+      return;
+    }
+
+    try {
+      await addToCart({
+        productId: product.id,
+        quantity,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        isService: true,
+      });
+    } catch (error) {
+      // Error is already handled/toasted in context, but good to catch here if needed
+    }
+  };
 
   if (isLoading) {
     return (
@@ -89,14 +117,7 @@ export default function ProductDetailsPage({
     if (inWishlist) {
       removeFromWishlist(product.id);
     } else {
-      addToWishlist({
-        id: product.id,
-        title: product.name,
-        image:
-          product.imageUrl || "https://placehold.co/400x300/png?text=No+Image",
-        price: `Rs ${product.finalPrice}`,
-        unit: product.priceLabel.replace("Per ", ""),
-      });
+      addToWishlist(product.id);
     }
   };
 
@@ -314,7 +335,11 @@ export default function ProductDetailsPage({
 
           {/* Actions */}
           <div className="mt-8 flex gap-3">
-            <Button className="flex-1 h-12 text-base" size="lg">
+            <Button
+              className="flex-1 h-12 text-base"
+              size="lg"
+              onClick={handleAddToCart}
+            >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
             </Button>
