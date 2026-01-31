@@ -14,11 +14,11 @@ import { useAppSelector } from "@/redux/hook";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  productService,
-  ProductSummary,
   ProductFilters as FilterType,
+  ProductSummary,
+  productService,
 } from "@/services/product.service";
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
 export default function CustomerBrowsePage() {
@@ -85,7 +85,7 @@ export default function CustomerBrowsePage() {
         {/* Loading State */}
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <Spinner className="h-10 w-10 text-primary" />
           </div>
         ) : (
           <>

@@ -17,8 +17,8 @@ import {
   Minus,
   Plus,
   ArrowLeft,
-  Loader2,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useState, use, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -64,7 +64,7 @@ export default function ProductDetailsPage({
   if (isLoading) {
     return (
       <div className="container mx-auto py-20 flex justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <Spinner className="h-10 w-10 text-primary" />
       </div>
     );
   }

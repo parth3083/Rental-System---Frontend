@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,31 @@ export function CustomerNav({
   const pathname = usePathname();
   const { wishlist } = useWishlist();
   const dispatch = useAppDispatch();
+  const [user, setUser] = useState<{
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    email: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const loadUser = () => {
+      if (typeof window !== "undefined") {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (error) {
+            console.error("Failed to parse user data:", error);
+          }
+        }
+      }
+    };
+
+    loadUser();
+    window.addEventListener("user-updated", loadUser);
+    return () => window.removeEventListener("user-updated", loadUser);
+  }, []);
 
   const routes = [
     {
@@ -156,17 +182,24 @@ export function CustomerNav({
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">User Name</p>
+                <p className="text-sm font-medium leading-none">
+                  {user
+                    ? user.name ||
+                      `${user.firstName || ""} ${user.lastName || ""}`.trim()
+                    : "Guest"}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  user@example.com
+                  {user ? user.email : ""}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>My Profile</span>
-            </DropdownMenuItem>
+            <Link href="/customer/profile">
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+            </Link>
             <Link href="/customer/orders">
               <DropdownMenuItem>My Orders</DropdownMenuItem>
             </Link>
