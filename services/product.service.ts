@@ -32,14 +32,38 @@ export interface ProductSummary {
   isAvailable: boolean;
 }
 
-export interface ProductDetails extends ProductSummary {
+export interface ProductDetails {
+  id: string;
+  vendorId: string;
+  name: string;
+  brand: string;
+  color: string;
+  imageUrl: string;
   description: string;
-  hourlyPrice: number | null;
   dailyPrice: number;
+  hourlyPrice: number | null;
   weeklyPrice: number | null;
   monthlyPrice: number | null;
+  discountPercentage: number;
   taxPercentage: number;
   securityDeposit: number;
+  isAvailable: boolean;
+  isPublished: boolean;
+  categoryId: number;
+  createdAt: string;
+  updatedAt: string;
+  category: {
+    id: number;
+    name: string;
+  };
+  vendor: {
+    id: string;
+    name: string;
+    companyName: string | null;
+  };
+  stock: {
+    totalPhysicalQuantity: number;
+  } | null;
 }
 
 export interface PaginatedResponse<T> {

@@ -89,13 +89,17 @@ export default function ProductDetailsPage({
     if (inWishlist) {
       removeFromWishlist(product.id);
     } else {
+      const dailyFinalPrice =
+        product.dailyPrice -
+        (product.dailyPrice * (product.discountPercentage || 0)) / 100;
+
       addToWishlist({
         id: product.id,
         title: product.name,
         image:
           product.imageUrl || "https://placehold.co/400x300/png?text=No+Image",
-        price: `Rs ${product.finalPrice}`,
-        unit: product.priceLabel.replace("Per ", ""),
+        price: `Rs ${dailyFinalPrice}`,
+        unit: "Day",
       });
     }
   };
