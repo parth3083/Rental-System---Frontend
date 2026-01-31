@@ -57,11 +57,11 @@ export default function LoginPage() {
       // Redirect based on role
       const role = response.data.user.role;
       if (role === "ADMIN") {
-        router.push("/admin"); // Adjust if needed
+        router.push("/admin/products");
       } else if (role === "VENDOR") {
         router.push("/"); // No specific vendor page yet, redirect to home
       } else {
-        router.push("/"); // Customer to home
+        router.push("/customer/products");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

@@ -75,7 +75,7 @@ export default function RegisterPage() {
         localStorage.setItem("user", JSON.stringify(response.data.user));
       }
 
-      router.push("/");
+      router.push("/customer/products");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Registration failed");
