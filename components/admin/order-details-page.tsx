@@ -140,7 +140,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                             order.status === "REJECTED" && "bg-red-100 text-red-700",
                             order.status === "CANCELLED" && "bg-red-100 text-red-700"
                         )}
-                    >
+                    >   
                         {order.displayStatus || order.status}
                     </Badge>
                 </div>
@@ -150,7 +150,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                 {/* Left Column */}
                 <div className="space-y-4">
                     <div>
-                        <Label>Customer</Label>
+                        <Label className="mb-2 block">Customer</Label>
                         <Select defaultValue={order.customer}>
                             <SelectTrigger>
                                 <SelectValue />
@@ -162,11 +162,11 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                         </Select>
                     </div>
                     <div>
-                        <Label>Invoice Address</Label>
+                        <Label className="mb-2 block">Invoice Address</Label>
                         <Input defaultValue={order.invoiceAddress} />
                     </div>
                     <div>
-                        <Label>Delivery Address</Label>
+                        <Label className="mb-2 block">Delivery Address</Label>
                         <Input defaultValue={order.deliveryAddress} />
                     </div>
                 </div>
@@ -174,7 +174,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                 {/* Right Column */}
                 <div className="space-y-4">
                     <div>
-                        <Label>Rental Period</Label>
+                        <Label className="mb-2 block">Rental Period</Label>
                         <div className="flex items-center gap-2">
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -202,7 +202,7 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
                         </div>
                     </div>
                     <div>
-                        <Label>Order date</Label>
+                        <Label className="mb-2 block">Order date</Label>
                         <Input type="text" defaultValue={order.orderDate.toDateString()} readOnly className="bg-muted" />
                     </div>
                 </div>

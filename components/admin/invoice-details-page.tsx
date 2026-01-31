@@ -138,7 +138,7 @@ export function InvoiceDetailsPage({ invoiceId }: { invoiceId: string }) {
                 {/* Left Column */}
                 <div className="space-y-4">
                     <div>
-                        <Label>Customer</Label>
+                        <Label className="mb-2 block">Customer</Label>
                         <Select defaultValue={invoice.customer}>
                             <SelectTrigger>
                                 <SelectValue />
@@ -150,11 +150,11 @@ export function InvoiceDetailsPage({ invoiceId }: { invoiceId: string }) {
                         </Select>
                     </div>
                     <div>
-                        <Label>Invoice Address</Label>
+                        <Label className="mb-2 block">Invoice Address</Label>
                         <Input defaultValue={invoice.invoiceAddress} />
                     </div>
                     <div>
-                        <Label>Delivery Address</Label>
+                        <Label className="mb-2 block">Delivery Address</Label>
                         <Input defaultValue={invoice.deliveryAddress} />
                     </div>
                 </div>
@@ -162,7 +162,7 @@ export function InvoiceDetailsPage({ invoiceId }: { invoiceId: string }) {
                 {/* Right Column */}
                 <div className="space-y-4">
                     <div>
-                        <Label>Rental Period</Label>
+                        <Label className="mb-2 block">Rental Period</Label>
                         <div className="flex items-center gap-2">
                             <Popover>
                                 <PopoverTrigger asChild>
@@ -190,11 +190,11 @@ export function InvoiceDetailsPage({ invoiceId }: { invoiceId: string }) {
                         </div>
                     </div>
                     <div>
-                        <Label>Invoice date</Label>
+                        <Label className="mb-2 block">Invoice date</Label>
                         <Input type="text" defaultValue={invoice.invoiceDate.toDateString()} readOnly className="bg-muted" />
                     </div>
                     <div>
-                        <Label>Due Date</Label>
+                        <Label className="mb-2 block">Due Date</Label>
                         <Input type="text" defaultValue={invoice.dueDate.toDateString()} />
                     </div>
                 </div>
