@@ -68,6 +68,22 @@ export const userService = {
     }
   },
 
+  async getUserById(userId: string) {
+    try {
+      const response = await axios.get<UserResponse>(`${API_URL}/${userId}`, {
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to fetch user details",
+        );
+      }
+      throw error;
+    }
+  },
+
   async updateUserDetails(data: UpdateUserPayload) {
     try {
       const response = await axios.patch<UserResponse>(`${API_URL}/me`, data, {
@@ -95,6 +111,24 @@ export const userService = {
         throw new Error(
           error.response.data.message || "Failed to change password",
         );
+      }
+      throw error;
+    }
+  },
+
+  async getAllUsers(page = 1, limit = 10, search?: string) {
+    try {
+      const params: any = { page, limit };
+      if (search) params.search = search;
+
+      const response = await axios.get(`${API_URL}`, {
+        params,
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(error.response.data.message || "Failed to fetch users");
       }
       throw error;
     }

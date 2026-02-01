@@ -20,7 +20,7 @@ import * as z from "zod";
 import { authService } from "@/services/auth.service";
 import { toast } from "sonner";
 
-const registerSchema = z
+const adminRegisterSchema = z
   .object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
@@ -40,9 +40,9 @@ const registerSchema = z
     path: ["confirmPassword"],
   });
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+type AdminRegisterFormValues = z.infer<typeof adminRegisterSchema>;
 
-export default function RegisterPage() {
+export default function AdminRegisterPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +51,11 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<AdminRegisterFormValues>({
+    resolver: zodResolver(adminRegisterSchema),
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = async (data: AdminRegisterFormValues) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -64,18 +64,18 @@ export default function RegisterPage() {
         lastName: data.lastName,
         email: data.email,
         password: data.password,
-        role: "CUSTOMER" as const,
+        role: "ADMIN" as const,
       };
       const response = await authService.register(payload);
 
-      toast.success("Registration successful!");
+      toast.success("Admin registration successful!");
 
       if (typeof window !== "undefined") {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
       }
 
-      router.push("/customer/products");
+      router.push("/admin/orders");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Registration failed");
@@ -92,8 +92,8 @@ export default function RegisterPage() {
   return (
     <Card className="w-full shadow-lg">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">Sign Up</CardTitle>
-        <CardDescription>Create a new customer account</CardDescription>
+        <CardTitle className="text-2xl">Admin Sign Up</CardTitle>
+        <CardDescription>Create a new administrator account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
@@ -107,7 +107,7 @@ export default function RegisterPage() {
               <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
-                placeholder="John"
+                placeholder="Admin"
                 {...register("firstName")}
               />
               {errors.firstName && (
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
-                placeholder="Doe"
+                placeholder="User"
                 {...register("lastName")}
               />
               {errors.lastName && (
@@ -135,7 +135,7 @@ export default function RegisterPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="admin@example.com"
               {...register("email")}
             />
             {errors.email && (
@@ -167,32 +167,18 @@ export default function RegisterPage() {
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "creating account..." : "Register"}
+            {isLoading ? "creating account..." : "Register Admin"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <div className="flex flex-col items-center gap-2 text-center text-sm">
-          <span className="text-muted-foreground">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="text-primary hover:underline font-medium"
-            >
-              Sign in
-            </Link>
-          </span>
+        <div className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
           <Link
-            href="/vendor-register"
-            className="text-xs text-muted-foreground hover:text-primary underline"
+            href="/login"
+            className="text-primary hover:underline font-medium"
           >
-            Become a vendor
-          </Link>
-          <Link
-            href="/admin-register"
-            className="text-xs text-muted-foreground hover:text-primary underline"
-          >
-            Admin registration
+            Sign in
           </Link>
         </div>
       </CardFooter>

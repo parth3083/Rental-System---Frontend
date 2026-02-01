@@ -35,7 +35,7 @@ export interface BaseRegisterPayload {
   lastName: string;
   email: string;
   password: string;
-  role: "CUSTOMER" | "VENDOR";
+  role: "CUSTOMER" | "VENDOR" | "ADMIN";
 }
 
 export interface CustomerRegisterPayload extends BaseRegisterPayload {
@@ -45,10 +45,18 @@ export interface CustomerRegisterPayload extends BaseRegisterPayload {
 export interface VendorRegisterPayload extends BaseRegisterPayload {
   role: "VENDOR";
   companyName: string;
+  productCategory: string;
   gstNumber: string;
 }
 
-export type RegisterPayload = CustomerRegisterPayload | VendorRegisterPayload;
+export interface AdminRegisterPayload extends BaseRegisterPayload {
+  role: "ADMIN";
+}
+
+export type RegisterPayload =
+  | CustomerRegisterPayload
+  | VendorRegisterPayload
+  | AdminRegisterPayload;
 
 export interface ResetPasswordPayload {
   email: string;
