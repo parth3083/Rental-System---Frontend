@@ -25,6 +25,7 @@ const vendorRegisterSchema = z
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     companyName: z.string().min(1, "Company name is required"),
+    productCategory: z.string().min(1, "Product category is required"),
     gstNumber: z
       .string()
       .length(15, "GST Number must be 15 characters")
@@ -75,6 +76,7 @@ export default function VendorRegisterPage() {
         password: data.password,
         role: "VENDOR" as const,
         companyName: data.companyName,
+        productCategory: data.productCategory,
         gstNumber: data.gstNumber,
       };
       const response = await authService.register(payload);
@@ -86,7 +88,7 @@ export default function VendorRegisterPage() {
         localStorage.setItem("user", JSON.stringify(response.data.user));
       }
 
-      router.push("/");
+      router.push("/admin/orders");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Registration failed");
@@ -143,7 +145,7 @@ export default function VendorRegisterPage() {
               )}
             </div>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="companyName">Company Name</Label>
               <Input
@@ -154,6 +156,19 @@ export default function VendorRegisterPage() {
               {errors.companyName && (
                 <span className="text-xs text-red-500">
                   {errors.companyName.message}
+                </span>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="productCategory">Product Category</Label>
+              <Input
+                id="productCategory"
+                placeholder="Electronics"
+                {...register("productCategory")}
+              />
+              {errors.productCategory && (
+                <span className="text-xs text-red-500">
+                  {errors.productCategory.message}
                 </span>
               )}
             </div>

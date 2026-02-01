@@ -23,6 +23,7 @@ import { useState, use, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWishlist } from "@/contexts/wishlist-context";
 import { useCart } from "@/contexts/cart-context";
 import { productService, ProductDetails } from "@/services/product.service";
@@ -34,6 +35,7 @@ export default function ProductDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const router = useRouter();
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
@@ -84,6 +86,7 @@ export default function ProductDetailsPage({
         endDate: endDate.toISOString(),
         isService: true,
       });
+      router.push("/customer/cart");
     } catch (error) {
       // Error is already handled/toasted in context, but good to catch here if needed
     }
