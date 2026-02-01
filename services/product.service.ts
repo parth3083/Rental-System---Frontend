@@ -213,4 +213,24 @@ export const productService = {
       throw error;
     }
   },
+  async createProduct(formData: FormData) {
+    try {
+      const response = await axios.post(`${API_URL}/products`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(typeof window !== "undefined" && localStorage.getItem("token")
+            ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            : {}),
+        },
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to create product",
+        );
+      }
+      throw error;
+    }
+  },
 };

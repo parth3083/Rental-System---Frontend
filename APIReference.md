@@ -1100,6 +1100,70 @@ Update invoice status.
 
 ---
 
+
+---
+
+### GET /api/sales-orders/:orderId
+Get sales order details by ID.
+
+**Authentication:** Required (Bearer Token)  
+**Authorization:** Vendor (own orders), Customer (own orders) or Admin
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| orderId | string | Order ID |
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Order details retrieved successfully",
+  "data": {
+    "id": "order123",
+    "customerId": "customer123",
+    "vendorId": "vendor123",
+    "status": "DRAFT",
+    "paymentPlan": "FULL_UPFRONT",
+    "totalOrderValue": 5000,
+    "createdAt": "2024-02-01T00:00:00.000Z",
+    "customer": {
+      "id": "customer123",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "address": "123 Main St",
+      "city": "Mumbai",
+      "pincode": "400001"
+    },
+    "details": [
+      {
+        "id": "detail123",
+        "productId": "product123",
+        "quantity": 2,
+        "unitPrice": 500,
+        "subtotal": 1000,
+        "product": {
+          "name": "Camera DSLR",
+          "imageUrl": "https://..."
+        }
+      }
+    ],
+    "invoices": [],
+    "paymentLedgers": []
+  }
+}
+```
+
+| Status | Description |
+|--------|-------------|
+| 200 | Order details retrieved successfully |
+| 401 | Unauthorized |
+| 403 | Unauthorized access to this order |
+| 404 | Order not found |
+| 500 | Internal server error |
+
+---
+
 ### GET /api/sales-orders/:orderId/return-summary
 Calculate return summary including refund/payment and late fees.
 

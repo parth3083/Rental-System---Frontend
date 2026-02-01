@@ -8,7 +8,7 @@ export interface OrderDetail {
   quantity: number;
   unitPrice: number;
   subtotal: number;
-  totalDepositAmount: number;
+  totalDepositAmount?: number;
   start_date: string | null;
   end_date: string | null;
   product: {
@@ -19,15 +19,19 @@ export interface OrderDetail {
 
 export interface BackendOrder {
   id: string;
-  customerId: string;
-  vendorId: string;
+  vendorId?: string; // Optional as prompt JSON didn't show it at root, but response mapped it
   status: string;
-  paymentPlan: string;
-  totalOrderValue: number;
-  isService: boolean;
-  createdAt: string;
-  details: OrderDetail[];
+  payment_plan: string;
+  total_order_value: number;
+  is_service: boolean;
+  created_at: string;
+  payment_amount_pending: number;
+  invoice_number: string | null;
+  message: string | null;
+  product_names: string[];
+  details?: OrderDetail[];
   vendor: {
+    id: string;
     name: string;
     email: string;
     companyName: string;
@@ -118,6 +122,42 @@ export const orderService = {
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(
           error.response.data.message || "Failed to fetch order details",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async updateOrderStatus(orderId: string, status: string) {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/${orderId}/status`,
+        { status },
+        { headers: getAuthHeader() },
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to update order status",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async acceptQuotation(orderId: string) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/accept/${orderId}`,
+        {},
+        { headers: getAuthHeader() },
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to accept quotation",
         );
       }
       throw error;

@@ -61,23 +61,36 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await orderService.getCustomerOrders();
-        if (response.success) {
-          setOrders(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        toast.error("Failed to load your orders");
-      } finally {
-        setIsLoading(false);
+  const fetchOrders = async () => {
+    try {
+      const response = await orderService.getCustomerOrders();
+      if (response.success) {
+        setOrders(response.data);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("Failed to load your orders");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrders();
   }, []);
+
+  const handleAcceptQuotation = async (orderId: string) => {
+    try {
+      setIsLoading(true);
+      await orderService.acceptQuotation(orderId);
+      toast.success("Quotation accepted successfully");
+      await fetchOrders();
+    } catch (error) {
+      console.error("Failed to accept quotation:", error);
+      toast.error("Failed to accept quotation");
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -119,11 +132,14 @@ export default function MyOrdersPage() {
                       Order #{order.id.slice(-8).toUpperCase()}
                     </CardTitle>
                     <CardDescription>
-                      {new Date(order.createdAt).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
+                      {new Date(order.created_at).toLocaleDateString(
+                        undefined,
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        },
+                      )}
                     </CardDescription>
                   </div>
                   <Badge
@@ -172,16 +188,31 @@ export default function MyOrdersPage() {
                           Total Amount
                         </span>
                         <span className="text-xl font-bold text-primary">
-                          Rs {order.totalOrderValue}
+                          Rs {order.total_order_value}
+                        </span>
+                        <span className="text-xs text-muted-foreground mt-1">
+                          Pending: Rs {order.payment_amount_pending}
                         </span>
                       </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex justify-end gap-3 mt-4">
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
+                      <Link href={`/customer/orders/${order.id}`}>
+                        <Button variant="outline" size="sm">
+                          View Quotation
+                        </Button>
+                      </Link>
+
+                      {order.status === "SENT" && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleAcceptQuotation(order.id)}
+                        >
+                          Accept Quotation
+                        </Button>
+                      )}
+
                       {mappedStatus === "payment_pending" && (
                         <Link href={`/customer/orders/${order.id}/payment`}>
                           <Button size="sm">Pay Now</Button>
@@ -189,13 +220,23 @@ export default function MyOrdersPage() {
                       )}
                     </div>
 
-                    {(mappedStatus === "quotation_pending" ||
-                      order.status === "SENT") && (
-                      <div className="bg-yellow-50 dark:bg-yellow-900/10 text-[11px] p-3 rounded-lg text-yellow-800 dark:text-yellow-200 mt-2 flex items-start gap-2 border border-yellow-100 dark:border-yellow-900/20">
+                    {mappedStatus === "quotation_pending" &&
+                      order.status !== "SENT" && (
+                        <div className="bg-yellow-50 dark:bg-yellow-900/10 text-[11px] p-3 rounded-lg text-yellow-800 dark:text-yellow-200 mt-2 flex items-start gap-2 border border-yellow-100 dark:border-yellow-900/20">
+                          <Clock className="h-4 w-4 shrink-0 transition-all animate-pulse" />
+                          <p>
+                            Waiting for vendor to accept the quotation. You will
+                            be notified once approved and ready for payment.
+                          </p>
+                        </div>
+                      )}
+
+                    {order.status === "SENT" && (
+                      <div className="bg-blue-50 dark:bg-blue-900/10 text-[11px] p-3 rounded-lg text-blue-800 dark:text-blue-200 mt-2 flex items-start gap-2 border border-blue-100 dark:border-blue-900/20">
                         <Clock className="h-4 w-4 shrink-0 transition-all animate-pulse" />
                         <p>
-                          Waiting for vendor to accept the quotation. You will
-                          be notified once approved and ready for payment.
+                          Vendor has sent the quotation. Please review and
+                          accept to proceed.
                         </p>
                       </div>
                     )}

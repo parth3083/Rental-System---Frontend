@@ -42,7 +42,11 @@ const STATUS_STYLES: Record<string, string> = {
   Completed: "bg-slate-800 text-white border-slate-700",
 };
 
+import { useRouter } from "next/navigation";
+
 export function OrderListView({ orders }: OrderListViewProps) {
+  const router = useRouter();
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -61,33 +65,31 @@ export function OrderListView({ orders }: OrderListViewProps) {
         </TableHeader>
         <TableBody>
           {orders.map((order) => (
-            <Link
-              href={`/admin/orders/${order.id}`}
+            <TableRow
               key={order.id}
-              className="contents"
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => router.push(`/admin/orders/${order.id}`)}
             >
-              <TableRow className="cursor-pointer hover:bg-muted/50">
-                <TableCell>
-                  <Checkbox />
-                </TableCell>
-                <TableCell className="font-medium">{order.reference}</TableCell>
-                <TableCell>{order.date}</TableCell>
-                <TableCell>{order.customer}</TableCell>
-                <TableCell>{order.product}</TableCell>
-                <TableCell>${order.total}</TableCell>
-                <TableCell>
-                  <Badge
-                    className={cn(
-                      "rounded-full px-3 py-1 font-normal border",
-                      STATUS_STYLES[order.displayStatus] ||
-                        "bg-gray-100 text-gray-700",
-                    )}
-                  >
-                    {order.displayStatus}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            </Link>
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Checkbox />
+              </TableCell>
+              <TableCell className="font-medium">{order.reference}</TableCell>
+              <TableCell>{order.date}</TableCell>
+              <TableCell>{order.customer}</TableCell>
+              <TableCell>{order.product}</TableCell>
+              <TableCell>${order.total}</TableCell>
+              <TableCell>
+                <Badge
+                  className={cn(
+                    "rounded-full px-3 py-1 font-normal border",
+                    STATUS_STYLES[order.displayStatus] ||
+                      "bg-gray-100 text-gray-700",
+                  )}
+                >
+                  {order.displayStatus}
+                </Badge>
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
