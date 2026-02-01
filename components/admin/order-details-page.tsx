@@ -12,7 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { orderService } from "@/services/order.service";
 import { CalendarIcon, Loader2, Printer, Send, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface OrderLine {
@@ -31,6 +31,7 @@ type OrderStatus =
   | "APPROVED"
   | "REJECTED"
   | "CONFIRMED"
+  | "INVOICED"
   | "CANCELLED";
 
 interface Order {
@@ -45,74 +46,166 @@ interface Order {
   rentalEnd?: Date;
   orderDate: Date;
   orderLines: OrderLine[];
+  invoiceId?: string; // Added to store invoice ID
 }
 
 export function OrderDetailsPage({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      try {
-        setLoading(true);
-        const response = await orderService.getOrderById(orderId);
-        if (response && response.data) {
-          const data = response.data;
+  const fetchOrderDetails = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await orderService.getOrderById(orderId);
+      if (response && response.data) {
+        const data = response.data;
 
-          // Determine rental dates from first detail item if available (assuming same for order or taking range)
-          // Backend details have start_date/end_date per item.
-          // For simplicity, taking the first item's dates as the order's main rental period for display
-          const firstDetail = data.details?.[0];
-          const rStart = firstDetail?.start_date
-            ? new Date(firstDetail.start_date)
-            : undefined;
-          const rEnd = firstDetail?.end_date
-            ? new Date(firstDetail.end_date)
-            : undefined;
+        // Determine rental dates
+        const firstDetail = data.details?.[0];
+        const rStart = firstDetail?.start_date
+          ? new Date(firstDetail.start_date)
+          : undefined;
+        const rEnd = firstDetail?.end_date
+          ? new Date(firstDetail.end_date)
+          : undefined;
 
-          const mappedOrder: Order = {
-            id: data.id,
-            reference:
-              data.invoices?.[0]?.invoiceNumber ||
-              data.id.substring(0, 8).toUpperCase(),
-            status: data.status,
-            customerId: data.customer?.id,
-            customer: data.customer?.name || "Unknown Customer",
-            invoiceAddress: data.customer?.address || "No Address",
-            deliveryAddress:
-              data.address || data.customer?.address || "No Address",
-            rentalStart: rStart,
-            rentalEnd: rEnd,
-            orderDate: new Date(data.createdAt),
-            orderLines: data.details.map((detail: any) => ({
-              id: detail.id,
-              product: detail.product?.name || "Unknown Product",
-              quantity: detail.quantity,
-              unit: "Units", // Defaulting as backend doesn't seem to store unit type on detail
-              unitPrice: Number(detail.unitPrice),
-              taxes: 0, // Backend doesn't seem to provide tax per line explicitly in this view yet
-              amount: Number(detail.subtotal),
-            })),
-          };
+        // Check if there is an invoice linked
+        const invoiceId = data.invoices?.[0]?.id;
 
-          setOrder(mappedOrder);
-          setStartDate(rStart);
-          setEndDate(rEnd);
-        }
-      } catch (error) {
-        console.error("Failed to fetch order details:", error);
-        toast.error("Failed to load order details");
-      } finally {
-        setLoading(false);
+        const mappedOrder: Order = {
+          id: data.id,
+          reference:
+            data.invoices?.[0]?.invoiceNumber ||
+            data.id.substring(0, 8).toUpperCase(),
+          status: data.status,
+          customerId: data.customer?.id,
+          customer: data.customer?.name || "Unknown Customer",
+          invoiceAddress: data.customer?.address || "No Address",
+          deliveryAddress:
+            data.address || data.customer?.address || "No Address",
+          rentalStart: rStart,
+          rentalEnd: rEnd,
+          orderDate: new Date(data.createdAt),
+          orderLines: data.details.map((detail: any) => ({
+            id: detail.id,
+            product: detail.product?.name || "Unknown Product",
+            quantity: detail.quantity,
+            unit: "Units",
+            unitPrice: Number(detail.unitPrice),
+            taxes: 0,
+            amount: Number(detail.subtotal),
+          })),
+          invoiceId: invoiceId
+        };
+
+        setOrder(mappedOrder);
+        setStartDate(rStart);
+        setEndDate(rEnd);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch order details:", error);
+      toast.error("Failed to load order details");
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
 
+  useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
     }
-  }, [orderId]);
+  }, [orderId, fetchOrderDetails]);
+
+  const handleCreateInvoice = async () => {
+    if (!order) return;
+    try {
+      setCreatingInvoice(true);
+      await orderService.createInvoice(order.id);
+      toast.success("Invoice created successfully");
+      fetchOrderDetails();
+    } catch (error: any) {
+      console.error("Failed to create invoice:", error);
+      toast.error(error.message || "Failed to create invoice");
+    } finally {
+      setCreatingInvoice(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!order || !order.invoiceId) return;
+    try {
+      setDownloadingPdf(true);
+
+      // 1. Fetch JSON data
+      const response = await orderService.getInvoicePdf(order.invoiceId);
+      const invoiceData = response.data; // The actual invoice object
+
+      // 2. Generate PDF client-side
+      const jsPDF = (await import("jspdf")).default;
+      const autoTable = (await import("jspdf-autotable")).default;
+
+      const doc = new jsPDF();
+
+      // -- Header --
+      doc.setFontSize(22);
+      doc.text("INVOICE", 150, 20);
+
+      doc.setFontSize(12);
+      doc.text("Rental System", 14, 20); // Company Name
+
+      // -- Details --
+      doc.setFontSize(10);
+      doc.text(`Invoice No: ${invoiceData.invoiceNumber}`, 150, 30);
+      doc.text(`Date: ${new Date(invoiceData.createdAt).toLocaleDateString()}`, 150, 35);
+
+      // -- Bill To --
+      doc.text("Bill To:", 14, 45);
+      doc.setFontSize(11);
+      doc.text(invoiceData.order.customer.name, 14, 52);
+      doc.setFontSize(10);
+      if (invoiceData.order.customer.address) {
+        doc.text(invoiceData.order.customer.address, 14, 58);
+      }
+
+      // -- Table --
+      const tableColumn = ["Product", "Qty", "Unit Price", "Subtotal"];
+      const tableRows: any[] = [];
+
+      invoiceData.order.details.forEach((item: any) => {
+        const row = [
+          item.product.name,
+          item.quantity,
+          Number(item.unitPrice).toFixed(2),
+          Number(item.subtotal).toFixed(2)
+        ];
+        tableRows.push(row);
+      });
+
+      autoTable(doc, {
+        startY: 70,
+        head: [tableColumn],
+        body: tableRows,
+      });
+
+      // -- Total --
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.text(`Tax: ${Number(invoiceData.taxAmount).toFixed(2)}`, 150, finalY);
+      doc.setFontSize(12);
+      doc.text(`Grand Total: ${Number(invoiceData.grandTotal).toFixed(2)}`, 150, finalY + 7);
+
+      doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`);
+
+    } catch (error: any) {
+      console.error("Download PDF failed:", error);
+      toast.error("Failed to generate invoice PDF");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -130,7 +223,10 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
     (sum, line) => sum + line.amount,
     0,
   );
-  const totalAmount = Number(untaxedAmount); // + taxes if needed
+  const totalAmount = Number(untaxedAmount);
+
+  // If order is invoiced, only show Print Invoice button
+  const isInvoiced = order.status === "INVOICED" || !!order.invoiceId;
 
   return (
     <div className="container mx-auto py-6 px-4 max-w-screen-xl">
@@ -143,10 +239,19 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Printer className="h-4 w-4" />
-            Print
-          </Button>
+          {isInvoiced ? (
+            <Button variant="outline" size="sm" className="gap-2" onClick={handlePrint} disabled={downloadingPdf}>
+              {downloadingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+              Print Invoice
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Printer className="h-4 w-4" />
+                Print
+              </Button>
+            </>
+          )}
 
           {/* Conditional Action Buttons */}
           {order.status === "DRAFT" && (
@@ -179,9 +284,15 @@ export function OrderDetailsPage({ orderId }: { orderId: string }) {
           {order.status === "CONFIRMED" && (
             <Button
               size="sm"
+              onClick={handleCreateInvoice}
+              disabled={creatingInvoice}
               className="gap-2 bg-purple-600 hover:bg-purple-700"
             >
-              Create Invoice
+              {creatingInvoice ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Create Invoice"
+              )}
             </Button>
           )}
 

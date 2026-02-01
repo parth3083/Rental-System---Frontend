@@ -123,4 +123,75 @@ export const orderService = {
       throw error;
     }
   },
+
+  async createInvoice(orderId: string) {
+    try {
+      const response = await axios.post(
+        `${API_URL}/invoice`,
+        { orderId },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to create invoice",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async getInvoicePdf(invoiceId: string) {
+    try {
+      const response = await axios.get(`${API_URL}/invoice/${invoiceId}`, {
+        headers: getAuthHeader(),
+        // responseType: 'blob', // Removed as backend returns JSON
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        // Try to read the blob error message if possible
+        throw new Error("Failed to download invoice PDF");
+      }
+      throw error;
+    }
+  },
+
+  async getInvoices(page = 1, limit = 10) {
+    try {
+      const response = await axios.get(`${API_URL}/invoice`, {
+        params: { page, limit },
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to fetch invoices",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async updateInvoiceStatus(invoiceId: string, status: string) {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/invoice/${invoiceId}/status`,
+        { status: status },
+        { headers: getAuthHeader() }
+      );
+      return response.data;
+    } catch (error) {
+      // Fallback for some APIs if patch isn't supported or different route
+      // Often status updates might be direct put or patch on the resource
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to update invoice status",
+        );
+      }
+      throw error;
+    }
+  },
 };

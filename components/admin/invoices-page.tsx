@@ -16,21 +16,53 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LayoutGrid, List, Search, Settings, Download, Upload } from "lucide-react"
-import { useState } from "react"
+import { LayoutGrid, List, Search, Settings, Download, Upload, Loader2 } from "lucide-react"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-
-// Mock invoices data
-export const MOCK_INVOICES = [
-    { id: "1", reference: "INV/2026/0001", date: "Jan 22", customer: "Spectacular Goshawk", total: 400000, status: "DRAFT" as const, displayStatus: "Draft" },
-    { id: "2", reference: "INV/2026/0002", date: "Jan 23", customer: "Vigorous Seahorse", total: 150000, status: "POSTED" as const, displayStatus: "Posted" },
-    { id: "3", reference: "INV/2026/0003", date: "Jan 24", customer: "Gracious Chinchilla", total: 775000, status: "POSTED" as const, displayStatus: "Posted" },
-    { id: "4", reference: "INV/2026/0004", date: "Jan 25", customer: "Glorious Walrus", total: 50000, status: "DRAFT" as const, displayStatus: "Draft" },
-]
+import { orderService } from "@/services/order.service"
+import { toast } from "sonner"
 
 export function InvoicesPage() {
     const [viewMode, setViewMode] = useState<"list" | "kanban">("kanban")
+    const [invoices, setInvoices] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                setLoading(true)
+                const response = await orderService.getInvoices();
+                if (response && response.data) {
+                    const mappedInvoices = response.data.map((inv: any) => ({
+                        id: inv.id,
+                        reference: inv.invoiceNumber,
+                        date: new Date(inv.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                        customer: inv.order?.customer?.name || "Unknown",
+                        total: Number(inv.grandTotal),
+                        status: inv.isPaid ? "POSTED" : "DRAFT", // Mapping logic can be adjusted
+                        displayStatus: inv.isPaid ? "Paid" : "Unpaid"
+                    }));
+                    setInvoices(mappedInvoices);
+                }
+            } catch (error) {
+                console.error("Failed to fetch invoices:", error);
+                toast.error("Failed to fetch invoices");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInvoices();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex h-[calc(100vh-140px)] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <div className="flex gap-6 h-[calc(100vh-140px)]">
@@ -61,18 +93,18 @@ export function InvoicesPage() {
                     </h3>
                     <div className="flex justify-between items-center">
                         <span>Total:</span>
-                        <span className="font-bold">{MOCK_INVOICES.length}</span>
+                        <span className="font-bold">{invoices.length}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span>Draft</span>
+                        <span>Unpaid</span>
                         <span className="bg-gray-100 text-gray-700 px-2 rounded-full text-xs">
-                            {MOCK_INVOICES.filter(i => i.status === "DRAFT").length}
+                            {invoices.filter(i => i.status === "DRAFT").length}
                         </span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span>Posted</span>
+                        <span>Paid</span>
                         <span className="bg-green-100 text-green-700 px-2 rounded-full text-xs">
-                            {MOCK_INVOICES.filter(i => i.status === "POSTED").length}
+                            {invoices.filter(i => i.status === "POSTED").length}
                         </span>
                     </div>
                 </div>
@@ -134,9 +166,9 @@ export function InvoicesPage() {
 
                 <div className="flex-1 overflow-auto">
                     {viewMode === 'kanban' ? (
-                        <InvoiceKanbanView invoices={MOCK_INVOICES} />
+                        <InvoiceKanbanView invoices={invoices} />
                     ) : (
-                        <InvoiceListView invoices={MOCK_INVOICES} />
+                        <InvoiceListView invoices={invoices} />
                     )}
                 </div>
             </div>
