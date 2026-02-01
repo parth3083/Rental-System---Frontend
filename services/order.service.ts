@@ -73,4 +73,54 @@ export const orderService = {
       throw error;
     }
   },
+
+  async getVendorOrders(page = 1, limit = 10) {
+    try {
+      const response = await axios.get<OrdersResponse>(`${API_URL}/vendor`, {
+        params: { page, limit },
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to fetch orders",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async getAdminOrders(page = 1, limit = 10) {
+    try {
+      const response = await axios.get<OrdersResponse>(`${API_URL}/admin`, {
+        params: { page, limit },
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to fetch orders",
+        );
+      }
+      throw error;
+    }
+  },
+
+  async getOrderById(orderId: string) {
+    try {
+      const response = await axios.get(`${API_URL}/${orderId}`, {
+        headers: getAuthHeader(),
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to fetch order details",
+        );
+      }
+      throw error;
+    }
+  },
 };
