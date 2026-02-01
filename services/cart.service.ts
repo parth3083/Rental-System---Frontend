@@ -99,4 +99,28 @@ export const cartService = {
       throw error;
     }
   },
+
+  async createSalesOrder() {
+    try {
+      const response = await axios.post<{
+        success: boolean;
+        message: string;
+        data: any[]; // Using any[] for now as we map it in the component
+      }>(
+        "http://localhost:8000/api/sales-orders",
+        {}, // Empty body matches backend requirement
+        {
+          headers: getAuthHeader(),
+        },
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to create sales order",
+        );
+      }
+      throw error;
+    }
+  },
 };

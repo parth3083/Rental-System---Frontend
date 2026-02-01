@@ -1,92 +1,211 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { useAppSelector } from "@/redux/hook"
-import { Clock, CheckCircle2, CreditCard } from "lucide-react"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { Clock, CheckCircle2, CreditCard, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { orderService, BackendOrder } from "@/services/order.service";
+import { toast } from "sonner";
 
-const STATUS_MAP = {
-    quotation_pending: { label: 'Quotation Pending', color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100', icon: Clock },
-    payment_pending: { label: 'Payment Pending', color: 'bg-blue-100 text-blue-700 hover:bg-blue-100', icon: CreditCard },
-    completed: { label: 'Completed', color: 'bg-green-100 text-green-700 hover:bg-green-100', icon: CheckCircle2 },
-    cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700 hover:bg-red-100', icon: Clock },
-}
+const STATUS_MAP: Record<string, any> = {
+  quotation_pending: {
+    label: "Quotation Pending",
+    color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100",
+    icon: Clock,
+  },
+  payment_pending: {
+    label: "Payment Pending",
+    color: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+    icon: CreditCard,
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-green-100 text-green-700 hover:bg-green-100",
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-red-100 text-red-700 hover:bg-red-100",
+    icon: AlertCircle,
+  },
+};
+
+const mapBackendStatus = (status: string) => {
+  switch (status) {
+    case "DRAFT":
+    case "SENT":
+      return "quotation_pending";
+    case "APPROVED":
+      return "payment_pending";
+    case "CONFIRMED":
+      return "completed";
+    case "CANCELLED":
+    case "REJECTED":
+      return "cancelled";
+    default:
+      return "quotation_pending";
+  }
+};
 
 export default function MyOrdersPage() {
-    const orders = useAppSelector((state) => state.orders.orders)
+  const [orders, setOrders] = useState<BackendOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await orderService.getCustomerOrders();
+        if (response.success) {
+          setOrders(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        toast.error("Failed to load your orders");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  if (isLoading) {
     return (
-        <div className="container mx-auto py-8 px-4 md:px-8">
-            <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner className="h-12 w-12 text-primary" />
+      </div>
+    );
+  }
 
-            <div className="space-y-6">
-                {orders.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                        You have no orders yet.
+  return (
+    <div className="container mx-auto py-8 px-4 md:px-8">
+      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+
+      <div className="space-y-6">
+        {orders.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground bg-muted/20 rounded-xl">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-medium">You have no orders yet.</p>
+            <Link href="/customer/products">
+              <Button variant="link" className="mt-2">
+                Browse products to start renting
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          orders.map((order) => {
+            const mappedStatus = mapBackendStatus(order.status);
+            const StatusConfig =
+              STATUS_MAP[mappedStatus] || STATUS_MAP.quotation_pending;
+
+            return (
+              <Card
+                key={order.id}
+                className="overflow-hidden border-border/50 hover:border-primary/20 transition-colors"
+              >
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/10">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold">
+                      Order #{order.id.slice(-8).toUpperCase()}
+                    </CardTitle>
+                    <CardDescription>
+                      {new Date(order.createdAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    className={`${StatusConfig.color} border-none px-3 py-1 font-semibold`}
+                    variant="secondary"
+                  >
+                    <StatusConfig.icon className="mr-1.5 h-3.5 w-3.5" />
+                    {StatusConfig.label}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {order.details &&
+                        order.details.map((detail, i) => (
+                          <div
+                            key={i}
+                            className="flex justify-between text-sm items-center"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium text-foreground">
+                                {detail.product.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded w-fit mt-1">
+                                Qty: {detail.quantity}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-foreground">
+                              Rs {detail.subtotal}
+                            </span>
+                          </div>
+                        ))}
                     </div>
-                ) : (
-                    orders.map((order) => {
-                        const StatusConfig = STATUS_MAP[order.status]
 
-                        return (
-                            <Card key={order.id}>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-base">Order #{order.id}</CardTitle>
-                                        <CardDescription>{new Date(order.date).toLocaleDateString()}</CardDescription>
-                                    </div>
-                                    <Badge className={StatusConfig.color} variant="secondary">
-                                        <StatusConfig.icon className="mr-1 h-3 w-3" />
-                                        {StatusConfig.label}
-                                    </Badge>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="mt-4 space-y-4">
-                                        {order.items && order.items.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {order.items.map((item: any, i: number) => (
-                                                    <div key={i} className="flex justify-between text-sm">
-                                                        <span>{item.title} <span className="text-muted-foreground">x{item.quantity}</span></span>
-                                                        <span className="font-medium">${item.price}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-muted-foreground italic">Items details not available</div>
-                                        )}
+                    <Separator />
 
-                                        <Separator />
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground italic">
+                        Sold by:{" "}
+                        <span className="font-medium text-foreground">
+                          {order.vendor.companyName || order.vendor.name}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
+                          Total Amount
+                        </span>
+                        <span className="text-xl font-bold text-primary">
+                          Rs {order.totalOrderValue}
+                        </span>
+                      </div>
+                    </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <div className="font-semibold">Total Amount</div>
-                                            <div className="text-lg font-bold">${order.total}</div>
-                                        </div>
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 mt-4">
+                      <Button variant="outline" size="sm">
+                        View Details
+                      </Button>
+                      {mappedStatus === "payment_pending" && (
+                        <Link href={`/customer/orders/${order.id}/payment`}>
+                          <Button size="sm">Pay Now</Button>
+                        </Link>
+                      )}
+                    </div>
 
-                                        {/* Actions */}
-                                        <div className="flex justify-end gap-3 mt-4">
-                                            <Button variant="outline">View Details</Button>
-                                            {order.status === 'payment_pending' && (
-                                                <Link href={`/customer/orders/${order.id}/payment`}>
-                                                    <Button>Pay Now</Button>
-                                                </Link>
-                                            )}
-                                        </div>
-
-                                        {order.status === 'quotation_pending' && (
-                                            <div className="bg-yellow-50 dark:bg-yellow-900/10 text-xs p-3 rounded text-yellow-800 dark:text-yellow-200 mt-2">
-                                                Waiting for vendor to accept the quotation. You will be notified once approved.
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )
-                    })
-                )}
-            </div>
-        </div>
-    )
+                    {(mappedStatus === "quotation_pending" ||
+                      order.status === "SENT") && (
+                      <div className="bg-yellow-50 dark:bg-yellow-900/10 text-[11px] p-3 rounded-lg text-yellow-800 dark:text-yellow-200 mt-2 flex items-start gap-2 border border-yellow-100 dark:border-yellow-900/20">
+                        <Clock className="h-4 w-4 shrink-0 transition-all animate-pulse" />
+                        <p>
+                          Waiting for vendor to accept the quotation. You will
+                          be notified once approved and ready for payment.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 }
